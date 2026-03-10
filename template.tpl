@@ -40,10 +40,14 @@ ___TEMPLATE_PARAMETERS___
       {
         "value": "makeString",
         "displayValue": "String"
+      },
+      {
+        "value": "hexToDecimal",
+        "displayValue": "Hex to Decimal"
       }
     ],
     "simpleValueType": true,
-    "help": "Choose the type to which your value/variable will be converted."
+    "help": "Choose the type to which your value/variable will be converted. Hex to Decimal converts a hexadecimal string (e.g. 4DB376A2) to its decimal integer value."
   },
   {
     "type": "TEXT",
@@ -63,6 +67,45 @@ const makeString = require('makeString');
 
 if (data.type === 'makeInteger') return makeInteger(data.value);
 if (data.type === 'makeNumber') return makeNumber(data.value);
+if (data.type === 'hexToDecimal') {
+  let hex = makeString(data.value);
+
+  if (hex.length >= 2 && (hex.charAt(0) === '0' && (hex.charAt(1) === 'x' || hex.charAt(1) === 'X'))) {
+    hex = hex.substring(2);
+  }
+
+  if (hex.length === 0) return undefined;
+
+  hex = hex.toLowerCase();
+  let result = 0;
+
+  for (let i = 0; i < hex.length; i++) {
+    const c = hex.charAt(i);
+    let digit;
+
+    if (c >= '0' && c <= '9') {
+      digit = makeInteger(c);
+    } else if (c === 'a') {
+      digit = 10;
+    } else if (c === 'b') {
+      digit = 11;
+    } else if (c === 'c') {
+      digit = 12;
+    } else if (c === 'd') {
+      digit = 13;
+    } else if (c === 'e') {
+      digit = 14;
+    } else if (c === 'f') {
+      digit = 15;
+    } else {
+      return undefined;
+    }
+
+    result = result * 16 + digit;
+  }
+
+  return result;
+}
 
 return makeString(data.value);
 
@@ -97,6 +140,42 @@ scenarios:
 
     let variableResult = runCode(mockData);
     assertThat(variableResult).isEqualTo(1);
+- name: Hex to Decimal
+  code: |-
+    const mockData = {
+      value: '4DB376A2',
+      type: 'hexToDecimal'
+    };
+
+    let variableResult = runCode(mockData);
+    assertThat(variableResult).isEqualTo(1303606946);
+- name: Hex to Decimal lowercase
+  code: |-
+    const mockData = {
+      value: '4db376a2',
+      type: 'hexToDecimal'
+    };
+
+    let variableResult = runCode(mockData);
+    assertThat(variableResult).isEqualTo(1303606946);
+- name: Hex to Decimal with 0x prefix
+  code: |-
+    const mockData = {
+      value: '0x1A',
+      type: 'hexToDecimal'
+    };
+
+    let variableResult = runCode(mockData);
+    assertThat(variableResult).isEqualTo(26);
+- name: Hex to Decimal with invalid input
+  code: |-
+    const mockData = {
+      value: 'ZZZZ',
+      type: 'hexToDecimal'
+    };
+
+    let variableResult = runCode(mockData);
+    assertThat(variableResult).isEqualTo(undefined);
 
 
 ___NOTES___
